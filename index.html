@@ -105,7 +105,7 @@
     </div>
   </div>
 
-  <footer>Translation powered by MyMemory Translated API (무료, API 키 불필요, 토큰/비용 없음)</footer>
+  <footer>버전 <span id="build-ver">v2026.09.17-4</span> · Translation powered by MyMemory Translated API (무료, API 키 불필요, 토큰/비용 없음)</footer>
 </div>
 
 <script>
@@ -326,7 +326,11 @@ function fitToLimit(text, limit) {
 // 자동화 설비 표준 용어집 — 무료 번역기가 엉뚱하게 번역하는 것을 막기 위해 우선 적용
 const EQUIPMENT_GLOSSARY = {
   en: {
-    '수동':'Manual','자동':'Auto','반자동':'Semi-Auto','원점복귀':'Home Return','원점':'Home',
+    '수동':'Manual','자동':'Auto',
+    '자동운전':'Auto Run','수동운전':'Manual Run','자동모드':'Auto Mode','수동모드':'Manual Mode',
+    '운전모드':'Run Mode','원점모드':'Home Mode','티치모드':'Teach Mode','셋팅모드':'Setting Mode',
+    '자동정지':'Auto Stop','수동조작':'Manual Op','연속운전':'Cont Run','단독운전':'Single Run',
+    '시운전':'Test Run','재기동':'Restart','일시정지':'Pause','운전준비':'Run Ready','반자동':'Semi-Auto','원점복귀':'Home Return','원점':'Home',
     '티치':'Teach','티칭':'Teaching','셋팅':'Setting','설정':'Setting','모니터':'Monitor',
     '알람':'Alarm','리셋':'Reset','부저':'Buzzer','비상정지':'Emergency Stop','인터록':'Interlock',
     '메인화면':'Main Screen','메인':'Main','화면':'Screen','운전':'Run','정지':'Stop','기동':'Start',
@@ -341,7 +345,9 @@ const EQUIPMENT_GLOSSARY = {
     '온도':'Temperature','압력':'Pressure','위치':'Position','시간':'Time','번호':'No.'
   },
   vi: {
-    '수동':'Thủ công','자동':'Tự động','원점복귀':'Về gốc','티치':'Dạy máy','셋팅':'Cài đặt',
+    '수동':'Thủ công','자동':'Tự động',
+    '자동운전':'Chạy tự động','수동운전':'Chạy thủ công','자동모드':'Chế độ tự động',
+    '수동모드':'Chế độ thủ công','운전모드':'Chế độ chạy','시운전':'Chạy thử','재기동':'Khởi động lại','원점복귀':'Về gốc','티치':'Dạy máy','셋팅':'Cài đặt',
     '설정':'Cài đặt','모니터':'Giám sát','알람':'Báo động','리셋':'Đặt lại','부저':'Còi',
     '비상정지':'Dừng khẩn cấp','메인화면':'Màn hình chính','운전':'Chạy','정지':'Dừng',
     '기동':'Khởi động','도어':'Cửa','열림':'Mở','닫힘':'Đóng','이상':'Lỗi','준비완료':'Sẵn sàng',
@@ -349,7 +355,9 @@ const EQUIPMENT_GLOSSARY = {
     '온도':'Nhiệt độ','압력':'Áp suất','수량':'Số lượng','양품':'OK','불량':'NG','확인':'OK','취소':'Hủy'
   },
   'zh-CN': {
-    '수동':'手动','자동':'自动','원점복귀':'回原点','티치':'示教','셋팅':'设定','설정':'设定',
+    '수동':'手动','자동':'自动',
+    '자동운전':'自动运行','수동운전':'手动运行','자동모드':'自动模式','수동모드':'手动模式',
+    '운전모드':'运行模式','티치모드':'示教模式','시운전':'试运行','재기동':'再启动','일시정지':'暂停','원점복귀':'回原点','티치':'示教','셋팅':'设定','설정':'设定',
     '모니터':'监视','알람':'报警','리셋':'复位','부저':'蜂鸣器','비상정지':'急停',
     '메인화면':'主画面','운전':'运行','정지':'停止','기동':'启动','도어':'门','열림':'开',
     '닫힘':'关','이상':'异常','준비완료':'就绪','동작중':'运行中','센서':'传感器','실린더':'气缸',
