@@ -271,7 +271,11 @@ function applyAbbreviations(text, limit) {
   let out = text;
   for (const [full, abbr] of ABBREVIATIONS) {
     if ([...out].length <= limit) break;
-    const re = new RegExp(full.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const esc = full.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // 단어 전체가 일치할 때만 치환 (Manually -> Manly 같은 오치환 방지)
+    const re = /^[A-Za-z ]+$/.test(full)
+      ? new RegExp('\\b' + esc + '\\b', 'gi')
+      : new RegExp(esc, 'gi');
     out = out.replace(re, abbr);
   }
   return out;
@@ -387,10 +391,17 @@ translateBtn.addEventListener('click', () => {
   runTranslation();
 });
 
+function maxLineLen(text) {
+  // 여러 줄이면 가장 긴 줄의 글자수를 기준으로 함 (줄바꿈은 세지 않음)
+  return Math.max(...text.split('\n').map(l => [...l].length), 0);
+}
+
 function charCountBadge(text, limit) {
-  const len = [...text].length;
+  const multi = text.indexOf('\n') >= 0;
+  const len = maxLineLen(text);
   const over = limit && len > limit;
-  return `<div>${escapeHtml(text)}</div><div class="charcount${over ? ' over' : ''}">${len}자${limit ? ' / 최대 ' + limit + '자' : ''}${over ? ' 초과' : ''}</div>`;
+  const label = multi ? `가장 긴 줄 ${len}자` : `${len}자`;
+  return `<div>${escapeHtml(text)}</div><div class="charcount${over ? ' over' : ''}">${label}${limit ? ' / 최대 ' + limit + '자' : ''}${over ? ' 초과' : ''}</div>`;
 }
 
 function renderResults(results) {
