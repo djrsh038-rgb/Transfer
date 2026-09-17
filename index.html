@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>다국어 번역기 (실시간, 무료)</title>
+<title>설비 HMI 다국어 번역기 (실시간, 무료)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -58,7 +58,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>🌐 다국어 번역기 (실시간 · 무료)</h1>
+  <h1>⚙️ 설비 HMI 다국어 번역기 (실시간 · 무료)</h1>
   <p class="sub">입력을 멈추면 잠시 후 자동으로 영어 · 베트남어 · 중국어(간체) 번역이 갱신됩니다. 무료 공개 번역 엔진을 사용하므로 API 키나 비용이 전혀 들지 않습니다.</p>
 
   <div class="card">
@@ -72,7 +72,7 @@
   </div>
 
   <div class="card">
-    <h2>2. 번역할 한국어 문장</h2>
+    <h2>2. 번역할 한국어 문구 (설비 화면 라벨)</h2>
     <p class="empty-note" style="margin-top:-6px;margin-bottom:12px">엑셀에서 한국어 셀을 여러 개 복사해 붙여넣으면 자동으로 여러 행으로 나뉩니다. 입력을 멈추면 자동으로 번역이 갱신됩니다.</p>
     <div class="rows-scroll">
       <table id="rows-table">
@@ -126,18 +126,26 @@ function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function renumberRows() {
+  Array.from(rowsBody.children).forEach((tr, i) => {
+    const cell = tr.querySelector('.row-num');
+    if (cell) cell.textContent = i + 1;
+  });
+}
+
 function addRow(text, atIndex) {
   rowId += 1;
   const tr = document.createElement('tr');
   tr.dataset.id = rowId;
   tr.innerHTML = `
-    <td>${rowId}</td>
+    <td class="row-num"></td>
     <td><textarea class="ko-input" placeholder="번역할 한국어 문장을 입력하세요">${text ? escapeHtml(text) : ''}</textarea></td>
     <td><button class="del" title="삭제">✕</button></td>
   `;
   tr.querySelector('.del').addEventListener('click', () => {
     tr.remove();
     if (rowsBody.children.length === 0) addRow();
+    renumberRows();
     scheduleTranslate();
   });
   if (atIndex === undefined || atIndex === null || atIndex >= rowsBody.children.length) {
@@ -145,6 +153,7 @@ function addRow(text, atIndex) {
   } else {
     rowsBody.insertBefore(tr, rowsBody.children[atIndex]);
   }
+  renumberRows();
   return tr;
 }
 
@@ -203,6 +212,7 @@ rowsBody.addEventListener('paste', (e) => {
     addRow(items[i], insertIndex);
     insertIndex += 1;
   }
+  renumberRows();
   scheduleTranslate();
 });
 
@@ -251,6 +261,10 @@ function scheduleTranslate() {
 
 // 글자수 초과 시 사용할 표준 약어 사전 (영어/베트남어 중심)
 const ABBREVIATIONS = [
+  // 여러 단어로 된 표현을 먼저 처리해야 함 (Emergency Stop이 Emerg Stop으로 쪼개지는 것 방지)
+  ['Emergency Stop', 'E-Stop'], ['Home Return', 'Home Ret'],
+  ['Present Value', 'PV'], ['Set Value', 'SV'], ['Cycle Time', 'C/T'],
+  ['Production Qty', 'Prod Qty'],
   ['Temperature', 'Temp'], ['Configuration', 'Config'], ['Information', 'Info'],
   ['Maximum', 'Max'], ['Minimum', 'Min'], ['Emergency', 'Emerg'],
   ['Automatic', 'Auto'], ['Manual', 'Man'], ['Pressure', 'Press'],
@@ -263,6 +277,12 @@ const ABBREVIATIONS = [
   ['Status', 'Stat'], ['Setting', 'Set'], ['System', 'Sys'],
   ['Machine', 'Mach'], ['Program', 'Prog'], ['Error', 'Err'],
   ['Alarm', 'Alm'], ['Display', 'Disp'], ['Monitor', 'Mon'],
+  ['Production', 'Prod'], ['Cylinder', 'Cyl'], ['Conveyor', 'Conv'],
+  ['Sensor', 'Sens'], ['Servo', 'Srv'], ['Inspection', 'Insp'],
+  ['Maintenance', 'Maint'], ['Initialize', 'Init'], ['Interlock', 'Intlk'],
+  ['Transfer', 'Trans'], ['Unloader', 'Unload'], ['Semi-Auto', 'S-Auto'],
+  ['Pneumatic', 'Pneu'], ['Running', 'Run'], ['Standby', 'Stby'],
+  ['History', 'Hist'], ['Screen', 'Scr'],
   ['Nhiệt độ', 'Nhiệt'], ['Thông tin', 'T.tin'], ['Tự động', 'T.động'],
   ['Khẩn cấp', 'K.cấp'], ['Áp suất', 'Áp'], ['Trạng thái', 'T.thái']
 ];
@@ -303,7 +323,52 @@ function fitToLimit(text, limit) {
   return arr.slice(0, limit - 1).join('') + '…';
 }
 
+// 자동화 설비 표준 용어집 — 무료 번역기가 엉뚱하게 번역하는 것을 막기 위해 우선 적용
+const EQUIPMENT_GLOSSARY = {
+  en: {
+    '수동':'Manual','자동':'Auto','반자동':'Semi-Auto','원점복귀':'Home Return','원점':'Home',
+    '티치':'Teach','티칭':'Teaching','셋팅':'Setting','설정':'Setting','모니터':'Monitor',
+    '알람':'Alarm','리셋':'Reset','부저':'Buzzer','비상정지':'Emergency Stop','인터록':'Interlock',
+    '메인화면':'Main Screen','메인':'Main','화면':'Screen','운전':'Run','정지':'Stop','기동':'Start',
+    '일시정지':'Pause','도어':'Door','열림':'Open','닫힘':'Closed','전체 도어':'All Doors',
+    '이상':'Fault','고장':'Fault','준비완료':'Ready','동작중':'Running','대기':'Standby',
+    '공압':'Pneumatic','실린더':'Cylinder','센서':'Sensor','서보':'Servo','컨베이어':'Conveyor',
+    '지그':'Jig','척':'Chuck','로더':'Loader','언로더':'Unloader','반송':'Transfer',
+    '생산수량':'Production Qty','수량':'Qty','양품':'OK','불량':'NG','누적':'Total',
+    '사이클타임':'Cycle Time','점검':'Inspection','보전':'Maintenance','이력':'History',
+    '설정값':'Set Value','현재값':'Present Value','전원':'Power','초기화':'Initialize',
+    '확인':'OK','취소':'Cancel','이전':'Prev','다음':'Next','상태':'Status','속도':'Speed',
+    '온도':'Temperature','압력':'Pressure','위치':'Position','시간':'Time','번호':'No.'
+  },
+  vi: {
+    '수동':'Thủ công','자동':'Tự động','원점복귀':'Về gốc','티치':'Dạy máy','셋팅':'Cài đặt',
+    '설정':'Cài đặt','모니터':'Giám sát','알람':'Báo động','리셋':'Đặt lại','부저':'Còi',
+    '비상정지':'Dừng khẩn cấp','메인화면':'Màn hình chính','운전':'Chạy','정지':'Dừng',
+    '기동':'Khởi động','도어':'Cửa','열림':'Mở','닫힘':'Đóng','이상':'Lỗi','준비완료':'Sẵn sàng',
+    '동작중':'Đang chạy','센서':'Cảm biến','실린더':'Xi lanh','속도':'Tốc độ','상태':'Trạng thái',
+    '온도':'Nhiệt độ','압력':'Áp suất','수량':'Số lượng','양품':'OK','불량':'NG','확인':'OK','취소':'Hủy'
+  },
+  'zh-CN': {
+    '수동':'手动','자동':'自动','원점복귀':'回原点','티치':'示教','셋팅':'设定','설정':'设定',
+    '모니터':'监视','알람':'报警','리셋':'复位','부저':'蜂鸣器','비상정지':'急停',
+    '메인화면':'主画面','운전':'运行','정지':'停止','기동':'启动','도어':'门','열림':'开',
+    '닫힘':'关','이상':'异常','준비완료':'就绪','동작중':'运行中','센서':'传感器','실린더':'气缸',
+    '속도':'速度','상태':'状态','온도':'温度','압력':'压力','수량':'数量','양품':'良品','불량':'不良',
+    '확인':'确定','취소':'取消','전원':'电源','초기화':'初始化','이력':'履历','점검':'点检'
+  }
+};
+
+function lookupGlossary(text, langCode) {
+  const dict = EQUIPMENT_GLOSSARY[langCode];
+  if (!dict) return null;
+  const key = text.trim();
+  return dict[key] || null;
+}
+
 async function translateOne(text, targetLangCode) {
+  // 설비 표준 용어집에 있으면 그것을 우선 사용 (기계번역보다 정확)
+  const known = lookupGlossary(text, targetLangCode);
+  if (known) return known;
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ko|${targetLangCode}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('번역 서버 응답 오류 (' + res.status + ')');
