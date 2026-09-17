@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>설비 HMI 다국어 번역기 (실시간, 무료)</title>
+<title>설비 HMI 다국어 번역기</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -24,20 +24,23 @@
   }
   * { box-sizing: border-box; }
   body { margin:0; background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px 16px 60px; }
-  .wrap { max-width: 980px; margin: 0 auto; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
   h1 { font-size: 1.4rem; margin: 0 0 4px; }
   .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 20px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; }
   .card h2 { font-size: 1rem; margin: 0 0 12px; }
-  .lang-limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .src-picker { display:flex; gap:8px; flex-wrap:wrap; }
+  .src-btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; font-size: 0.85rem; font-family: inherit; }
+  .src-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .lang-limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .lang-limits label { display:block; font-size:0.78rem; color: var(--text-muted); margin-bottom:4px; }
   .lang-limits input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background: var(--surface-2); color: var(--text); font-size:0.9rem; }
   .rows-scroll { overflow-x:auto; }
-  table { width:100%; border-collapse: collapse; min-width: 640px; }
+  table { width:100%; border-collapse: collapse; min-width: 680px; }
   th, td { padding:8px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; font-size:0.85rem; }
   th { color: var(--text-muted); font-weight:600; font-size:0.78rem; }
-  textarea, input[type="text"] { width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background: var(--surface-2); color: var(--text); font-family:inherit; font-size:0.85rem; resize:vertical; min-height:36px; }
   #result-table td { white-space: pre-wrap; }
+  textarea, input[type="text"] { width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background: var(--surface-2); color: var(--text); font-family:inherit; font-size:0.85rem; resize:vertical; min-height:36px; }
   .charcount { font-size:0.72rem; color: var(--text-muted); margin-top:2px; }
   .over { color: var(--danger); font-weight:600; }
   .btnrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
@@ -58,25 +61,26 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>⚙️ 설비 HMI 다국어 번역기 (실시간 · 무료)</h1>
-  <p class="sub">입력을 멈추면 잠시 후 자동으로 영어 · 베트남어 · 중국어(간체) 번역이 갱신됩니다. 무료 공개 번역 엔진을 사용하므로 API 키나 비용이 전혀 들지 않습니다.</p>
+  <h1>⚙️ 설비 HMI 다국어 번역기</h1>
+  <p class="sub">자동화 설비 HMI·조작 패널 문구를 한국어 · 영어 · 베트남어 · 중국어(간체) 사이에서 자유롭게 번역합니다. 원본 언어를 고르면 나머지 3개 언어로 동시에 번역되고, 언어별 글자수 제한에 맞춰 약어로 정리됩니다.</p>
 
   <div class="card">
-    <h2>1. 언어별 최대 글자수 (비워두면 제한 없음)</h2>
-    <div class="lang-limits">
-      <div><label>English (영어)</label><input type="text" id="limit-en" inputmode="numeric" placeholder="예: 30"></div>
-      <div><label>Tiếng Việt (베트남어)</label><input type="text" id="limit-vi" inputmode="numeric" placeholder="예: 40"></div>
-      <div><label>简体中文 (중국어 간체)</label><input type="text" id="limit-zh" inputmode="numeric" placeholder="예: 20"></div>
-    </div>
-    <p class="empty-note" style="margin:0">※ 글자수를 초과하면 자연스럽게 줄이는 대신, 초과된 부분을 "…"으로 잘라 표시합니다 (무료 엔진이라 AI 재작성은 지원하지 않습니다).</p>
+    <h2>1. 원본 언어 선택</h2>
+    <div class="src-picker" id="src-picker"></div>
+    <p class="empty-note" style="margin:10px 0 0" id="src-desc"></p>
   </div>
 
   <div class="card">
-    <h2>2. 번역할 한국어 문구 (설비 화면 라벨)</h2>
-    <p class="empty-note" style="margin-top:-6px;margin-bottom:12px">엑셀에서 한국어 셀을 여러 개 복사해 붙여넣으면 자동으로 여러 행으로 나뉩니다. 입력을 멈추면 자동으로 번역이 갱신됩니다.</p>
+    <h2>2. 번역할 언어별 최대 글자수 (비워두면 제한 없음)</h2>
+    <div class="lang-limits" id="limit-box"></div>
+  </div>
+
+  <div class="card">
+    <h2 id="input-title">3. 번역할 문구</h2>
+    <p class="empty-note" style="margin-top:-6px;margin-bottom:12px">엑셀에서 셀을 여러 개 복사해 붙여넣으면 자동으로 행이 나뉩니다. 한 셀 안의 줄바꿈(Alt+Enter)도 그대로 유지됩니다. 입력을 멈추면 자동으로 번역이 갱신됩니다.</p>
     <div class="rows-scroll">
       <table id="rows-table">
-        <thead><tr><th style="width:36px">#</th><th>한국어 원문</th><th style="width:36px"></th></tr></thead>
+        <thead><tr><th style="width:36px">#</th><th id="src-col-head">원문</th><th style="width:36px"></th></tr></thead>
         <tbody id="rows-body"></tbody>
       </table>
     </div>
@@ -99,169 +103,240 @@
     <h2>번역 결과</h2>
     <div class="rows-scroll">
       <table id="result-table">
-        <thead><tr><th>한국어</th><th>English</th><th>Tiếng Việt</th><th>简体中文</th></tr></thead>
+        <thead><tr id="result-head"></tr></thead>
         <tbody id="result-body"></tbody>
       </table>
     </div>
   </div>
 
-  <footer>버전 <span id="build-ver">v2026.09.17-4</span> · Translation powered by MyMemory Translated API (무료, API 키 불필요, 토큰/비용 없음)</footer>
+  <footer>버전 <span id="build-ver">v2026.09.17-7</span> · Translation powered by MyMemory Translated API (무료, API 키 불필요)</footer>
 </div>
 
 <script>
-const DEBOUNCE_MS = 900;
+/* ============================================================
+   언어 정의
+   ============================================================ */
+const LANGS = [
+  { code: 'ko',    api: 'ko',    label: '한국어',   short: '한국어' },
+  { code: 'en',    api: 'en',    label: 'English',  short: '영어' },
+  { code: 'vi',    api: 'vi',    label: 'Tiếng Việt', short: '베트남어' },
+  { code: 'zh',    api: 'zh-CN', label: '简体中文',  short: '중국어' }
+];
+const LANG_BY_CODE = Object.fromEntries(LANGS.map(l => [l.code, l]));
 
-let rowId = 0;
-let lastResults = null;
-let debounceTimer = null;
-let requestSeq = 0;
+let srcLang = 'ko';                 // 현재 선택된 원본 언어
+const limits = {};                  // 언어별 글자수 제한
+function targetLangs() { return LANGS.filter(l => l.code !== srcLang); }
 
-const rowsBody = document.getElementById('rows-body');
-const statusText = document.getElementById('status-text');
-const liveDot = document.getElementById('live-dot');
-const downloadBtn = document.getElementById('download-btn');
-const translateBtn = document.getElementById('translate-btn');
+/* ============================================================
+   자동화 설비 통합 용어집 — 한 줄에 4개 언어를 함께 정의해서
+   어떤 언어에서 시작하든 서로 찾아갈 수 있게 함
+   [ko, en, vi, zh]
+   ============================================================ */
+const TERMS = [
+  // 운전 / 모드
+  ['수동','Manual','Thủ công','手动'],
+  ['자동','Auto','Tự động','自动'],
+  ['반자동','Semi-Auto','Bán tự động','半自动'],
+  ['자동운전','Auto Run','Chạy tự động','自动运行'],
+  ['수동운전','Manual Run','Chạy thủ công','手动运行'],
+  ['자동모드','Auto Mode','Chế độ tự động','自动模式'],
+  ['수동모드','Manual Mode','Chế độ thủ công','手动模式'],
+  ['운전모드','Run Mode','Chế độ chạy','运行模式'],
+  ['티치모드','Teach Mode','Chế độ dạy máy','示教模式'],
+  ['셋팅모드','Setting Mode','Chế độ cài đặt','设定模式'],
+  ['시운전','Test Run','Chạy thử','试运行'],
+  ['연속운전','Cont Run','Chạy liên tục','连续运行'],
+  ['단독운전','Single Run','Chạy đơn','单独运行'],
+  ['운전','Run','Chạy','运行'],
+  ['운전준비','Run Ready','Sẵn sàng chạy','运行准备'],
+  ['재기동','Restart','Khởi động lại','再启动'],
+  ['원점복귀','Home Return','Về gốc','回原点'],
+  ['원점','Home','Gốc','原点'],
+  ['티치','Teach','Dạy máy','示教'],
+  ['티칭','Teaching','Dạy máy','示教'],
+  ['셋팅','Setting','Cài đặt','设定'],
+  ['설정','Setting','Cài đặt','设定'],
+  ['모니터','Monitor','Giám sát','监视'],
 
-function escapeHtml(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+  // 동작 / 상태
+  ['정지','Stop','Dừng','停止'],
+  ['기동','Start','Khởi động','启动'],
+  ['일시정지','Pause','Tạm dừng','暂停'],
+  ['자동정지','Auto Stop','Dừng tự động','自动停止'],
+  ['비상정지','Emergency Stop','Dừng khẩn cấp','急停'],
+  ['감지','Detect','Phát hiện','检测'],
+  ['완료','Done','Hoàn thành','完成'],
+  ['진행중','Running','Đang chạy','运行中'],
+  ['동작중','Running','Đang chạy','运行中'],
+  ['대기','Standby','Chờ','待机'],
+  ['준비완료','Ready','Sẵn sàng','就绪'],
+  ['확인','Check','Kiểm tra','确认'],
+  ['저장','Save','Lưu','保存'],
+  ['삭제','Del','Xóa','删除'],
+  ['등록','Reg','Đăng ký','登录'],
+  ['선택','Sel','Chọn','选择'],
+  ['전진','Fwd','Tiến','前进'],
+  ['후진','Rev','Lùi','后退'],
+  ['상승','Up','Lên','上升'],
+  ['하강','Down','Xuống','下降'],
+  ['정회전','CW','Quay thuận','正转'],
+  ['역회전','CCW','Quay nghịch','反转'],
+  ['클램프','Clamp','Kẹp','夹紧'],
+  ['언클램프','Unclamp','Nhả kẹp','松开'],
+  ['흡착','Vacuum On','Hút chân không','吸附'],
+  ['해제','Release','Nhả','解除'],
+  ['초기화','Reset','Đặt lại','复位'],
+  ['리셋','Reset','Đặt lại','复位'],
+  ['열림','Open','Mở','开'],
+  ['닫힘','Closed','Đóng','关'],
+  ['이상','Fault','Lỗi','异常'],
+  ['고장','Fault','Hỏng','故障'],
+  ['알람','Alarm','Báo động','报警'],
+  ['부저','Buzzer','Còi','蜂鸣器'],
+  ['인터록','Interlock','Khóa liên động','联锁'],
+  ['전원','Power','Nguồn','电源'],
+  ['취소','Cancel','Hủy','取消'],
+  ['이전','Prev','Trước','上一个'],
+  ['다음','Next','Sau','下一个'],
+  ['상태','Status','Trạng thái','状态'],
 
-function renumberRows() {
-  Array.from(rowsBody.children).forEach((tr, i) => {
-    const cell = tr.querySelector('.row-num');
-    if (cell) cell.textContent = i + 1;
+  // 설비 부품 / 명사
+  ['도어','Door','Cửa','门'],
+  ['전체 도어','All Doors','Tất cả cửa','所有门'],
+  ['실린더','Cylinder','Xi lanh','气缸'],
+  ['센서','Sensor','Cảm biến','传感器'],
+  ['서보','Servo','Servo','伺服'],
+  ['컨베이어','Conveyor','Băng tải','输送带'],
+  ['지그','Jig','Đồ gá','治具'],
+  ['척','Chuck','Mâm cặp','夹盘'],
+  ['로더','Loader','Bộ nạp','上料机'],
+  ['언로더','Unloader','Bộ dỡ','下料机'],
+  ['반송','Transfer','Vận chuyển','搬送'],
+  ['밸브','Valve','Van','阀'],
+  ['모터','Motor','Động cơ','马达'],
+  ['펌프','Pump','Bơm','泵'],
+  ['히터','Heater','Lò sưởi','加热器'],
+  ['팬','Fan','Quạt','风扇'],
+  ['로봇','Robot','Robot','机器人'],
+  ['축','Axis','Trục','轴'],
+  ['이젝터','Ejector','Bộ đẩy','顶出'],
+  ['솔레노이드','Solenoid','Van điện từ','电磁阀'],
+  ['브레이크','Brake','Phanh','制动'],
+  ['노즐','Nozzle','Vòi phun','喷嘴'],
+  ['필터','Filter','Bộ lọc','过滤器'],
+  ['탱크','Tank','Bình','储罐'],
+  ['챔버','Chamber','Buồng','腔室'],
+  ['테이블','Table','Bàn','工作台'],
+  ['암','Arm','Cánh tay','臂'],
+  ['그리퍼','Gripper','Kẹp','夹爪'],
+  ['툴','Tool','Dụng cụ','刀具'],
+  ['레이저','Laser','Laser','激光'],
+  ['카메라','Camera','Máy ảnh','相机'],
+  ['비전','Vision','Thị giác','视觉'],
+  ['바코드','Barcode','Mã vạch','条码'],
+  ['라벨','Label','Nhãn','标签'],
+  ['제품','Product','Sản phẩm','产品'],
+  ['트레이','Tray','Khay','托盘'],
+  ['팔레트','Pallet','Pallet','托板'],
+  ['공압','Pneumatic','Khí nén','气动'],
+  ['유압','Hydraulic','Thủy lực','液压'],
+  ['진공','Vacuum','Chân không','真空'],
+  ['에어압력','Air Press','Áp suất khí','气压'],
+  ['메인화면','Main Screen','Màn hình chính','主画面'],
+  ['화면','Screen','Màn hình','画面'],
+
+  // 수치 / 관리
+  ['생산수량','Production Qty','Sản lượng','生产数量'],
+  ['누적수량','Total Qty','Tổng số lượng','累计数量'],
+  ['수량','Qty','Số lượng','数量'],
+  ['양품','OK','OK','良品'],
+  ['불량','NG','NG','不良'],
+  ['누적','Total','Tổng','累计'],
+  ['사이클타임','Cycle Time','Thời gian chu kỳ','循环时间'],
+  ['점검','Inspection','Kiểm tra','点检'],
+  ['보전','Maintenance','Bảo trì','保养'],
+  ['이력','History','Lịch sử','履历'],
+  ['설정값','Set Value','Giá trị đặt','设定值'],
+  ['현재값','Present Value','Giá trị hiện tại','当前值'],
+  ['온도','Temperature','Nhiệt độ','温度'],
+  ['압력','Pressure','Áp suất','压力'],
+  ['속도','Speed','Tốc độ','速度'],
+  ['위치','Position','Vị trí','位置'],
+  ['시간','Time','Thời gian','时间'],
+  ['번호','No.','Số','编号'],
+  ['카운터','Counter','Bộ đếm','计数器'],
+  ['타이머','Timer','Bộ định thời','定时器'],
+  ['토크','Torque','Mô-men','扭矩'],
+  ['게이지','Gauge','Đồng hồ đo','量规'],
+
+  // 자주 쓰는 복합어
+  ['센서감지','Sensor Detect','Cảm biến phát hiện','传感器检测'],
+  ['센서이상','Sensor Fault','Lỗi cảm biến','传感器异常'],
+  ['실린더전진','Cylinder Fwd','Xi lanh tiến','气缸前进'],
+  ['실린더후진','Cylinder Rev','Xi lanh lùi','气缸后退'],
+  ['도어열림','Door Open','Cửa mở','门开'],
+  ['도어닫힘','Door Closed','Cửa đóng','门关'],
+  ['척클램프','Chuck Clamp','Mâm cặp kẹp','夹盘夹紧'],
+  ['진공흡착','Vacuum On','Hút chân không','真空吸附'],
+  ['위치확인','Pos Check','Kiểm tra vị trí','位置确认'],
+  ['데이터저장','Data Save','Lưu dữ liệu','数据保存'],
+  ['이력삭제','History Del','Xóa lịch sử','履历删除'],
+  ['카운터초기화','Counter Reset','Đặt lại bộ đếm','计数复位'],
+  ['원점확인','Home Check','Kiểm tra gốc','原点确认'],
+  ['모터기동','Motor Start','Khởi động động cơ','马达启动'],
+  ['모터정지','Motor Stop','Dừng động cơ','马达停止'],
+  ['알람해제','Alarm Reset','Xóa báo động','报警复位'],
+  ['운전정지','Run Stop','Dừng chạy','运行停止'],
+  ['작업완료','Work Done','Xong việc','作业完成'],
+  ['사이클완료','Cycle Done','Xong chu kỳ','循环完成'],
+  ['반송완료','Transfer Done','Xong vận chuyển','搬送完成'],
+  ['검사완료','Insp Done','Xong kiểm tra','检查完成']
+];
+
+// 언어별 조회 인덱스 만들기 (양방향 조회용)
+const TERM_INDEX = {};
+LANGS.forEach((lang, li) => {
+  TERM_INDEX[lang.code] = {};
+  TERMS.forEach(row => {
+    const key = row[li].trim().toLowerCase();
+    // 먼저 정의된 항목을 우선 (중복 표현일 때 대표 용어 유지)
+    if (!(key in TERM_INDEX[lang.code])) TERM_INDEX[lang.code][key] = row;
   });
-}
+});
+const LANG_INDEX_POS = Object.fromEntries(LANGS.map((l, i) => [l.code, i]));
 
-function addRow(text, atIndex) {
-  rowId += 1;
-  const tr = document.createElement('tr');
-  tr.dataset.id = rowId;
-  tr.innerHTML = `
-    <td class="row-num"></td>
-    <td><textarea class="ko-input" placeholder="번역할 한국어 문장을 입력하세요">${text ? escapeHtml(text) : ''}</textarea></td>
-    <td><button class="del" title="삭제">✕</button></td>
-  `;
-  tr.querySelector('.del').addEventListener('click', () => {
-    tr.remove();
-    if (rowsBody.children.length === 0) addRow();
-    renumberRows();
-    scheduleTranslate();
-  });
-  if (atIndex === undefined || atIndex === null || atIndex >= rowsBody.children.length) {
-    rowsBody.appendChild(tr);
-  } else {
-    rowsBody.insertBefore(tr, rowsBody.children[atIndex]);
-  }
-  renumberRows();
-  return tr;
-}
+function lookupTerm(text, fromCode, toCode) {
+  const idx = TERM_INDEX[fromCode];
+  if (!idx) return null;
+  const key = text.trim().toLowerCase();
+  const row = idx[key];
+  if (row) return row[LANG_INDEX_POS[toCode]];
 
-// 엑셀 clipboard 형식(TSV)을 셀 내부 줄바꿈까지 정확히 인식해서 파싱
-function parseExcelClipboard(text) {
-  const t = text.replace(/\r\n/g, '\n');
-  const rows = [];
-  let row = [];
-  let field = '';
-  let inQuotes = false;
-  for (let i = 0; i < t.length; i++) {
-    const c = t[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (t[i + 1] === '"') { field += '"'; i++; }
-        else { inQuotes = false; }
-      } else {
-        field += c;
-      }
-    } else {
-      if (c === '"') {
-        inQuotes = true;
-      } else if (c === '\t') {
-        row.push(field); field = '';
-      } else if (c === '\n') {
-        row.push(field); field = '';
-        rows.push(row); row = [];
-      } else {
-        field += c;
+  const joiner = (toCode === 'zh') ? '' : ' ';
+  // 붙여 쓴 복합어 분해 (예: 밸브감지 -> Valve Detect)
+  const keys = Object.keys(idx).sort((a, b) => b.length - a.length);
+  for (const head of keys) {
+    if (key.length > head.length && key.startsWith(head)) {
+      const tail = key.slice(head.length).trim();
+      if (idx[tail]) {
+        return idx[head][LANG_INDEX_POS[toCode]] + joiner + idx[tail][LANG_INDEX_POS[toCode]];
       }
     }
   }
-  row.push(field);
-  rows.push(row);
-  return rows;
-}
-
-function extractItemsFromClipboard(text) {
-  return parseExcelClipboard(text)
-    .map(r => (r[0] || '').trim())
-    .filter(s => s.length > 0);
-}
-
-rowsBody.addEventListener('paste', (e) => {
-  const target = e.target;
-  if (!target.classList || !target.classList.contains('ko-input')) return;
-  const pasted = (e.clipboardData || window.clipboardData).getData('text');
-  if (!pasted) return;
-  const items = extractItemsFromClipboard(pasted);
-  if (items.length === 0) return;
-  e.preventDefault();
-  const currentTr = target.closest('tr');
-  let insertIndex = Array.from(rowsBody.children).indexOf(currentTr) + 1;
-  target.value = items[0];
-  for (let i = 1; i < items.length; i++) {
-    addRow(items[i], insertIndex);
-    insertIndex += 1;
+  // 띄어 쓴 두 단어 조합 (예: Sensor Detect, 센서 감지)
+  const parts = key.split(/\s+/);
+  if (parts.length === 2 && idx[parts[0]] && idx[parts[1]]) {
+    return idx[parts[0]][LANG_INDEX_POS[toCode]] + joiner + idx[parts[1]][LANG_INDEX_POS[toCode]];
   }
-  renumberRows();
-  scheduleTranslate();
-});
-
-rowsBody.addEventListener('input', (e) => {
-  if (e.target.classList && e.target.classList.contains('ko-input')) scheduleTranslate();
-});
-['limit-en', 'limit-vi', 'limit-zh'].forEach(id => {
-  document.getElementById(id).addEventListener('input', scheduleTranslate);
-});
-
-document.getElementById('add-row').addEventListener('click', () => addRow());
-document.getElementById('add-rows-5').addEventListener('click', () => { for (let i=0;i<5;i++) addRow(); });
-document.getElementById('clear-rows').addEventListener('click', () => { rowsBody.innerHTML = ''; addRow(); scheduleTranslate(); });
-
-addRow(); addRow(); addRow();
-
-function setStatus(msg, kind, live) {
-  statusText.textContent = msg || '';
-  document.getElementById('status').className = 'status' + (kind ? ' ' + kind : '');
-  liveDot.className = 'dot' + (live ? ' live' : '');
+  return null;
 }
 
-function getLimit(id) {
-  const v = document.getElementById(id).value.trim();
-  if (!v) return null;
-  const n = parseInt(v, 10);
-  return (Number.isFinite(n) && n > 0) ? n : null;
-}
-
-function getItems() {
-  return Array.from(document.querySelectorAll('.ko-input')).map(t => t.value.trim()).filter(v => v.length > 0);
-}
-
-function scheduleTranslate() {
-  if (debounceTimer) clearTimeout(debounceTimer);
-  const items = getItems();
-  if (items.length === 0) {
-    setStatus('', null, false);
-    downloadBtn.disabled = true;
-    document.getElementById('result-card').style.display = 'none';
-    return;
-  }
-  setStatus('입력 대기 중... (멈추면 자동 번역)', null, false);
-  debounceTimer = setTimeout(() => runTranslation(), DEBOUNCE_MS);
-}
-
-// 글자수 초과 시 사용할 표준 약어 사전 (영어/베트남어 중심)
+/* ============================================================
+   글자수 제한 · 약어 처리
+   ============================================================ */
 const ABBREVIATIONS = [
-  // 여러 단어로 된 표현을 먼저 처리해야 함 (Emergency Stop이 Emerg Stop으로 쪼개지는 것 방지)
+  // 여러 단어 표현을 먼저 처리 (Emergency Stop이 쪼개지는 것 방지)
   ['Emergency Stop', 'E-Stop'], ['Home Return', 'Home Ret'],
   ['Present Value', 'PV'], ['Set Value', 'SV'], ['Cycle Time', 'C/T'],
   ['Production Qty', 'Prod Qty'],
@@ -292,7 +367,6 @@ function applyAbbreviations(text, limit) {
   for (const [full, abbr] of ABBREVIATIONS) {
     if ([...out].length <= limit) break;
     const esc = full.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // 단어 전체가 일치할 때만 치환 (Manually -> Manly 같은 오치환 방지)
     const re = /^[A-Za-z ]+$/.test(full)
       ? new RegExp('\\b' + esc + '\\b', 'gi')
       : new RegExp(esc, 'gi');
@@ -303,81 +377,207 @@ function applyAbbreviations(text, limit) {
 
 function fitToLimit(text, limit) {
   if (!limit) return text;
-  // 셀 안 줄바꿈이 있으면 줄 단위로 각각 제한 적용
   if (text.indexOf('\n') >= 0) {
     return text.split('\n').map(l => fitToLimit(l, limit)).join('\n');
   }
   if ([...text].length <= limit) return text;
-
-  // 1) 표준 약어로 치환해서 줄여보기
   let out = applyAbbreviations(text, limit);
   if ([...out].length <= limit) return out;
-
-  // 2) 그래도 길면 관사/전치사 등 생략
   out = out.replace(/\b(the|a|an|of|for|to|in|on|at)\b\s*/gi, '').replace(/\s+/g, ' ').trim();
   if ([...out].length <= limit) return out;
-
-  // 3) 마지막으로 잘라내기
   const arr = [...out];
   if (limit <= 1) return arr.slice(0, limit).join('');
   return arr.slice(0, limit - 1).join('') + '…';
 }
 
-// 자동화 설비 표준 용어집 — 무료 번역기가 엉뚱하게 번역하는 것을 막기 위해 우선 적용
-const EQUIPMENT_GLOSSARY = {
-  en: {
-    '수동':'Manual','자동':'Auto',
-    '자동운전':'Auto Run','수동운전':'Manual Run','자동모드':'Auto Mode','수동모드':'Manual Mode',
-    '운전모드':'Run Mode','원점모드':'Home Mode','티치모드':'Teach Mode','셋팅모드':'Setting Mode',
-    '자동정지':'Auto Stop','수동조작':'Manual Op','연속운전':'Cont Run','단독운전':'Single Run',
-    '시운전':'Test Run','재기동':'Restart','일시정지':'Pause','운전준비':'Run Ready','반자동':'Semi-Auto','원점복귀':'Home Return','원점':'Home',
-    '티치':'Teach','티칭':'Teaching','셋팅':'Setting','설정':'Setting','모니터':'Monitor',
-    '알람':'Alarm','리셋':'Reset','부저':'Buzzer','비상정지':'Emergency Stop','인터록':'Interlock',
-    '메인화면':'Main Screen','메인':'Main','화면':'Screen','운전':'Run','정지':'Stop','기동':'Start',
-    '일시정지':'Pause','도어':'Door','열림':'Open','닫힘':'Closed','전체 도어':'All Doors',
-    '이상':'Fault','고장':'Fault','준비완료':'Ready','동작중':'Running','대기':'Standby',
-    '공압':'Pneumatic','실린더':'Cylinder','센서':'Sensor','서보':'Servo','컨베이어':'Conveyor',
-    '지그':'Jig','척':'Chuck','로더':'Loader','언로더':'Unloader','반송':'Transfer',
-    '생산수량':'Production Qty','수량':'Qty','양품':'OK','불량':'NG','누적':'Total',
-    '사이클타임':'Cycle Time','점검':'Inspection','보전':'Maintenance','이력':'History',
-    '설정값':'Set Value','현재값':'Present Value','전원':'Power','초기화':'Initialize',
-    '확인':'OK','취소':'Cancel','이전':'Prev','다음':'Next','상태':'Status','속도':'Speed',
-    '온도':'Temperature','압력':'Pressure','위치':'Position','시간':'Time','번호':'No.'
-  },
-  vi: {
-    '수동':'Thủ công','자동':'Tự động',
-    '자동운전':'Chạy tự động','수동운전':'Chạy thủ công','자동모드':'Chế độ tự động',
-    '수동모드':'Chế độ thủ công','운전모드':'Chế độ chạy','시운전':'Chạy thử','재기동':'Khởi động lại','원점복귀':'Về gốc','티치':'Dạy máy','셋팅':'Cài đặt',
-    '설정':'Cài đặt','모니터':'Giám sát','알람':'Báo động','리셋':'Đặt lại','부저':'Còi',
-    '비상정지':'Dừng khẩn cấp','메인화면':'Màn hình chính','운전':'Chạy','정지':'Dừng',
-    '기동':'Khởi động','도어':'Cửa','열림':'Mở','닫힘':'Đóng','이상':'Lỗi','준비완료':'Sẵn sàng',
-    '동작중':'Đang chạy','센서':'Cảm biến','실린더':'Xi lanh','속도':'Tốc độ','상태':'Trạng thái',
-    '온도':'Nhiệt độ','압력':'Áp suất','수량':'Số lượng','양품':'OK','불량':'NG','확인':'OK','취소':'Hủy'
-  },
-  'zh-CN': {
-    '수동':'手动','자동':'自动',
-    '자동운전':'自动运行','수동운전':'手动运行','자동모드':'自动模式','수동모드':'手动模式',
-    '운전모드':'运行模式','티치모드':'示教模式','시운전':'试运行','재기동':'再启动','일시정지':'暂停','원점복귀':'回原点','티치':'示教','셋팅':'设定','설정':'设定',
-    '모니터':'监视','알람':'报警','리셋':'复位','부저':'蜂鸣器','비상정지':'急停',
-    '메인화면':'主画面','운전':'运行','정지':'停止','기동':'启动','도어':'门','열림':'开',
-    '닫힘':'关','이상':'异常','준비완료':'就绪','동작중':'运行中','센서':'传感器','실린더':'气缸',
-    '속도':'速度','상태':'状态','온도':'温度','압력':'压力','수량':'数量','양품':'良品','불량':'不良',
-    '확인':'确定','취소':'取消','전원':'电源','초기화':'初始化','이력':'履历','점검':'点检'
-  }
-};
-
-function lookupGlossary(text, langCode) {
-  const dict = EQUIPMENT_GLOSSARY[langCode];
-  if (!dict) return null;
-  const key = text.trim();
-  return dict[key] || null;
+function capitalizeFirst(text) {
+  if (!text) return text;
+  return text.split('\n').map(line =>
+    line.replace(/^(\s*)(\S)/, (m, sp, ch) => sp + ch.toLocaleUpperCase())
+  ).join('\n');
 }
 
-async function translateOne(text, targetLangCode) {
-  // 설비 표준 용어집에 있으면 그것을 우선 사용 (기계번역보다 정확)
-  const known = lookupGlossary(text, targetLangCode);
+/* ============================================================
+   화면 구성
+   ============================================================ */
+let rowId = 0;
+let lastResults = null;
+let lastMeta = null;     // { srcLang, targets: [codes] }
+let debounceTimer = null;
+let requestSeq = 0;
+const DEBOUNCE_MS = 900;
+
+const rowsBody = document.getElementById('rows-body');
+const statusText = document.getElementById('status-text');
+const liveDot = document.getElementById('live-dot');
+const downloadBtn = document.getElementById('download-btn');
+const translateBtn = document.getElementById('translate-btn');
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function buildSrcPicker() {
+  const box = document.getElementById('src-picker');
+  box.innerHTML = '';
+  LANGS.forEach(l => {
+    const b = document.createElement('button');
+    b.className = 'src-btn' + (l.code === srcLang ? ' active' : '');
+    b.textContent = l.label;
+    b.addEventListener('click', () => {
+      if (srcLang === l.code) return;
+      srcLang = l.code;
+      buildSrcPicker();
+      buildLimitBox();
+      updateLabels();
+      document.getElementById('result-card').style.display = 'none';
+      downloadBtn.disabled = true;
+      scheduleTranslate();
+    });
+    box.appendChild(b);
+  });
+}
+
+function buildLimitBox() {
+  const box = document.getElementById('limit-box');
+  box.innerHTML = '';
+  targetLangs().forEach(l => {
+    const div = document.createElement('div');
+    div.innerHTML = `<label>${l.label} (${l.short})</label>
+      <input type="text" inputmode="numeric" id="limit-${l.code}" placeholder="예: 20" value="${limits[l.code] || ''}">`;
+    box.appendChild(div);
+    div.querySelector('input').addEventListener('input', (e) => {
+      const v = e.target.value.trim();
+      const n = parseInt(v, 10);
+      limits[l.code] = (v && Number.isFinite(n) && n > 0) ? n : '';
+      scheduleTranslate();
+    });
+  });
+}
+
+function updateLabels() {
+  const s = LANG_BY_CODE[srcLang];
+  document.getElementById('src-col-head').textContent = `${s.label} 원문`;
+  document.getElementById('input-title').textContent = `3. 번역할 ${s.label} 문구`;
+  document.getElementById('src-desc').textContent =
+    `${s.label} → ${targetLangs().map(l => l.label).join(' · ')} 로 번역됩니다.`;
+  Array.from(document.querySelectorAll('.ko-input')).forEach(t => {
+    t.placeholder = `${s.label} 문구를 입력하세요`;
+  });
+}
+
+function renumberRows() {
+  Array.from(rowsBody.children).forEach((tr, i) => {
+    const cell = tr.querySelector('.row-num');
+    if (cell) cell.textContent = i + 1;
+  });
+}
+
+function addRow(text, atIndex) {
+  rowId += 1;
+  const tr = document.createElement('tr');
+  tr.dataset.id = rowId;
+  tr.innerHTML = `
+    <td class="row-num"></td>
+    <td><textarea class="ko-input" placeholder="${LANG_BY_CODE[srcLang].label} 문구를 입력하세요">${text ? escapeHtml(text) : ''}</textarea></td>
+    <td><button class="del" title="삭제">✕</button></td>
+  `;
+  tr.querySelector('.del').addEventListener('click', () => {
+    tr.remove();
+    if (rowsBody.children.length === 0) addRow();
+    renumberRows();
+    scheduleTranslate();
+  });
+  if (atIndex === undefined || atIndex === null || atIndex >= rowsBody.children.length) {
+    rowsBody.appendChild(tr);
+  } else {
+    rowsBody.insertBefore(tr, rowsBody.children[atIndex]);
+  }
+  renumberRows();
+  return tr;
+}
+
+/* 엑셀 클립보드(TSV) 파싱 — 셀 안 줄바꿈까지 정확히 인식 */
+function parseExcelClipboard(text) {
+  const t = text.replace(/\r\n/g, '\n');
+  const rows = []; let row = []; let field = ''; let inQuotes = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (t[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; }
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === '\t') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+      else field += c;
+    }
+  }
+  row.push(field); rows.push(row);
+  return rows;
+}
+
+function extractItemsFromClipboard(text) {
+  return parseExcelClipboard(text).map(r => (r[0] || '').trim()).filter(s => s.length > 0);
+}
+
+rowsBody.addEventListener('paste', (e) => {
+  const target = e.target;
+  if (!target.classList || !target.classList.contains('ko-input')) return;
+  const pasted = (e.clipboardData || window.clipboardData).getData('text');
+  if (!pasted) return;
+  const items = extractItemsFromClipboard(pasted);
+  if (items.length === 0) return;
+  e.preventDefault();
+  const currentTr = target.closest('tr');
+  let insertIndex = Array.from(rowsBody.children).indexOf(currentTr) + 1;
+  target.value = items[0];
+  for (let i = 1; i < items.length; i++) { addRow(items[i], insertIndex); insertIndex += 1; }
+  renumberRows();
+  scheduleTranslate();
+});
+
+rowsBody.addEventListener('input', (e) => {
+  if (e.target.classList && e.target.classList.contains('ko-input')) scheduleTranslate();
+});
+
+document.getElementById('add-row').addEventListener('click', () => addRow());
+document.getElementById('add-rows-5').addEventListener('click', () => { for (let i=0;i<5;i++) addRow(); });
+document.getElementById('clear-rows').addEventListener('click', () => { rowsBody.innerHTML = ''; addRow(); scheduleTranslate(); });
+
+function setStatus(msg, kind, live) {
+  statusText.textContent = msg || '';
+  document.getElementById('status').className = 'status' + (kind ? ' ' + kind : '');
+  liveDot.className = 'dot' + (live ? ' live' : '');
+}
+
+function getItems() {
+  return Array.from(document.querySelectorAll('.ko-input')).map(t => t.value.trim()).filter(v => v.length > 0);
+}
+
+function scheduleTranslate() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  if (getItems().length === 0) {
+    setStatus('', null, false);
+    downloadBtn.disabled = true;
+    document.getElementById('result-card').style.display = 'none';
+    return;
+  }
+  setStatus('입력 대기 중... (멈추면 자동 번역)', null, false);
+  debounceTimer = setTimeout(() => runTranslation(), DEBOUNCE_MS);
+}
+
+/* ============================================================
+   번역
+   ============================================================ */
+async function translateOne(text, fromCode, toCode) {
+  // 설비 용어집 우선 조회 (기계번역보다 정확)
+  const known = lookupTerm(text, fromCode, toCode);
   if (known) return known;
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ko|${targetLangCode}`;
+  const fromApi = LANG_BY_CODE[fromCode].api;
+  const toApi = LANG_BY_CODE[toCode].api;
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromApi}|${toApi}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('번역 서버 응답 오류 (' + res.status + ')');
   const data = await res.json();
@@ -394,23 +594,19 @@ function flattenLines(items) {
   return { flatLines, counts };
 }
 
-function reassembleLines(translatedFlat, counts) {
-  const result = [];
-  let idx = 0;
-  counts.forEach(c => {
-    result.push(translatedFlat.slice(idx, idx + c).join('\n'));
-    idx += c;
-  });
-  return result;
+function reassembleLines(flat, counts) {
+  const out = []; let idx = 0;
+  counts.forEach(c => { out.push(flat.slice(idx, idx + c).join('\n')); idx += c; });
+  return out;
 }
 
-async function translateBatch(items, targetLangCode) {
+async function translateBatch(items, fromCode, toCode) {
   const { flatLines, counts } = flattenLines(items);
   const flatResults = [];
-  for (const text of flatLines) {
-    if (text.trim() === '') { flatResults.push(''); continue; }
+  for (const line of flatLines) {
+    if (line.trim() === '') { flatResults.push(''); continue; }
     try {
-      flatResults.push(await translateOne(text, targetLangCode));
+      flatResults.push(await translateOne(line, fromCode, toCode));
     } catch (e) {
       flatResults.push('(번역 실패)');
     }
@@ -423,33 +619,32 @@ async function runTranslation() {
   const items = getItems();
   if (items.length === 0) return;
   const mySeq = ++requestSeq;
-
-  const limitEn = getLimit('limit-en');
-  const limitVi = getLimit('limit-vi');
-  const limitZh = getLimit('limit-zh');
+  const targets = targetLangs();
 
   translateBtn.disabled = true;
   downloadBtn.disabled = true;
   setStatus('번역하는 중...', null, true);
 
   try {
-    const enRaw = await translateBatch(items, 'en');
-    if (mySeq !== requestSeq) return;
-    const viRaw = await translateBatch(items, 'vi');
-    if (mySeq !== requestSeq) return;
-    const zhRaw = await translateBatch(items, 'zh-CN');
-    if (mySeq !== requestSeq) return;
+    const raw = {};
+    for (const t of targets) {
+      setStatus(`${t.label}(으)로 번역하는 중...`, null, true);
+      raw[t.code] = await translateBatch(items, srcLang, t.code);
+      if (mySeq !== requestSeq) return;
+    }
 
-    lastResults = items.map((ko, i) => ({
-      ko,
-      en: fitToLimit(enRaw[i], limitEn),
-      vi: fitToLimit(viRaw[i], limitVi),
-      zh: fitToLimit(zhRaw[i], limitZh),
-      limitEn, limitVi, limitZh
-    }));
+    lastResults = items.map((src, i) => {
+      const row = { src };
+      targets.forEach(t => {
+        const lim = limits[t.code] || null;
+        row[t.code] = capitalizeFirst(fitToLimit(raw[t.code][i] || '', lim));
+      });
+      return row;
+    });
+    lastMeta = { srcLang, targets: targets.map(t => t.code) };
 
-    renderResults(lastResults);
-    setStatus(`실시간 번역 완료 (${lastResults.length}개 문장)`, 'ok', false);
+    renderResults(lastResults, lastMeta);
+    setStatus(`번역 완료 (${lastResults.length}개 문구)`, 'ok', false);
     downloadBtn.disabled = false;
   } catch (e) {
     console.error(e);
@@ -464,8 +659,10 @@ translateBtn.addEventListener('click', () => {
   runTranslation();
 });
 
+/* ============================================================
+   결과 표시
+   ============================================================ */
 function maxLineLen(text) {
-  // 여러 줄이면 가장 긴 줄의 글자수를 기준으로 함 (줄바꿈은 세지 않음)
   return Math.max(...text.split('\n').map(l => [...l].length), 0);
 }
 
@@ -477,25 +674,26 @@ function charCountBadge(text, limit) {
   return `<div>${escapeHtml(text)}</div><div class="charcount${over ? ' over' : ''}">${label}${limit ? ' / 최대 ' + limit + '자' : ''}${over ? ' 초과' : ''}</div>`;
 }
 
-function renderResults(results) {
-  const card = document.getElementById('result-card');
+function renderResults(results, meta) {
+  const head = document.getElementById('result-head');
+  head.innerHTML = `<th>${LANG_BY_CODE[meta.srcLang].label}</th>` +
+    meta.targets.map(c => `<th>${LANG_BY_CODE[c].label}</th>`).join('');
+
   const body = document.getElementById('result-body');
   body.innerHTML = '';
   results.forEach(r => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(r.ko)}</td>
-      <td>${charCountBadge(r.en, r.limitEn)}</td>
-      <td>${charCountBadge(r.vi, r.limitVi)}</td>
-      <td>${charCountBadge(r.zh, r.limitZh)}</td>
-    `;
+    tr.innerHTML = `<td>${escapeHtml(r.src)}</td>` +
+      meta.targets.map(c => `<td>${charCountBadge(r[c] || '', limits[c] || null)}</td>`).join('');
     body.appendChild(tr);
   });
-  card.style.display = '';
+  document.getElementById('result-card').style.display = '';
 }
 
+/* ============================================================
+   엑셀 내보내기 — 언어별 시트
+   ============================================================ */
 function applyWrapText(ws) {
-  // 셀 안 줄바꿈이 엑셀에서 그대로 보이도록 자동 줄바꿈 속성 지정
   const range = XLSX.utils.decode_range(ws['!ref']);
   for (let R = range.s.r; R <= range.e.r; R++) {
     for (let C = range.s.c; C <= range.e.c; C++) {
@@ -510,27 +708,32 @@ function applyWrapText(ws) {
 }
 
 downloadBtn.addEventListener('click', () => {
-  if (!lastResults || lastResults.length === 0) return;
+  if (!lastResults || lastResults.length === 0 || !lastMeta) return;
   try {
     const wb = XLSX.utils.book_new();
-    const koSheet = XLSX.utils.json_to_sheet(lastResults.map((r, i) => ({ '번호': i + 1, '한국어 원문': r.ko })));
-    applyWrapText(koSheet);
-    XLSX.utils.book_append_sheet(wb, koSheet, '한국어');
-    const enSheet = XLSX.utils.json_to_sheet(lastResults.map((r, i) => ({
-      '번호': i + 1, '한국어 원문': r.ko, 'English': r.en, '목표 글자수': r.limitEn || '', '실제 글자수': [...r.en].length
-    })));
-    applyWrapText(enSheet);
-    XLSX.utils.book_append_sheet(wb, enSheet, 'English');
-    const viSheet = XLSX.utils.json_to_sheet(lastResults.map((r, i) => ({
-      '번호': i + 1, '한국어 원문': r.ko, 'Tiếng Việt': r.vi, '목표 글자수': r.limitVi || '', '실제 글자수': [...r.vi].length
-    })));
-    applyWrapText(viSheet);
-    XLSX.utils.book_append_sheet(wb, viSheet, 'Tiếng Việt');
-    const zhSheet = XLSX.utils.json_to_sheet(lastResults.map((r, i) => ({
-      '번호': i + 1, '한국어 원문': r.ko, '简体中文': r.zh, '목표 글자수': r.limitZh || '', '실제 글자수': [...r.zh].length
-    })));
-    applyWrapText(zhSheet);
-    XLSX.utils.book_append_sheet(wb, zhSheet, '简体中文');
+    const srcLabel = LANG_BY_CODE[lastMeta.srcLang].label;
+
+    // 원본 언어 시트
+    const srcSheet = XLSX.utils.json_to_sheet(
+      lastResults.map((r, i) => ({ '번호': i + 1, [srcLabel + ' 원문']: r.src }))
+    );
+    applyWrapText(srcSheet);
+    XLSX.utils.book_append_sheet(wb, srcSheet, srcLabel);
+
+    // 번역 언어별 시트
+    lastMeta.targets.forEach(code => {
+      const label = LANG_BY_CODE[code].label;
+      const sheet = XLSX.utils.json_to_sheet(lastResults.map((r, i) => ({
+        '번호': i + 1,
+        [srcLabel + ' 원문']: r.src,
+        [label]: r[code] || '',
+        '목표 글자수': limits[code] || '',
+        '실제 글자수': maxLineLen(r[code] || '')
+      })));
+      applyWrapText(sheet);
+      XLSX.utils.book_append_sheet(wb, sheet, label);
+    });
+
     XLSX.writeFile(wb, 'translations.xlsx');
     setStatus('엑셀 파일을 다운로드했습니다.', 'ok', false);
   } catch (e) {
@@ -538,6 +741,12 @@ downloadBtn.addEventListener('click', () => {
     setStatus('엑셀 생성 중 오류: ' + (e.message || String(e)), 'err', false);
   }
 });
+
+/* 초기화 */
+buildSrcPicker();
+buildLimitBox();
+addRow(); addRow(); addRow();
+updateLabels();
 </script>
 </body>
 </html>
